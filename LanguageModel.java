@@ -40,12 +40,15 @@ public class LanguageModel {
         // Reads just enough characters to form the first window
         for (int i = 0; i < windowLength; i++){
             c = in.readChar();
+            if (c == '\r') { i--; continue; }
             window = window + c;
         }
         // Processes the entire text, one character at a time
         while (!in.isEmpty()) {
                 // Gets the next character
             c = in.readChar();
+            if (c == '\r') {continue; }
+
             // Checks if the window is already in the map
             List probs = CharDataMap.get(window);
             // If the window was not found in the map
@@ -65,7 +68,7 @@ public class LanguageModel {
         // Proceeds to compute and set the p and cp fields of all the CharData objects
         // in each linked list in the map.
         for (List probs : CharDataMap.values())
-        calculateProbabilities(probs);
+            calculateProbabilities(probs);
         }
 	
 
@@ -83,23 +86,24 @@ public class LanguageModel {
         ListIterator l2 = probs.listIterator(0);
         while (l2.hasNext()){
             CharData c = l2.next();
-            c.p = c.count / sum;
+            c.p = (double) c.count / sum;
             sumCp = sumCp + c.p;
             c.cp = sumCp;
-        }
-	}
+        }   
+    }
 
     // Returns a random character from the given probabilities list.
 	char getRandomChar(List probs) {
 		double ran = randomGenerator.nextDouble();
         ListIterator l2 = probs.listIterator(0);
+        CharData c = null;
         while (l2.hasNext()){
-             CharData c = l2.next();
+             c = l2.next();
              if (c.cp > ran){
                 return c.chr;
              }
         }
-		return ' ';
+		return c.chr;
 	}
 
     /**
@@ -114,7 +118,7 @@ public class LanguageModel {
 
         String fin = initialText;
 
-        while (fin.length() < textLength){
+        while (fin.length() < textLength || fin.charAt(fin.length() - 1) != ' '){
             String window = fin.substring(fin.length() - windowLength);
             List probs = CharDataMap.get(window);
 
